@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ExpenseLess Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(to bottom, #1e293b, #0f172a);
+            color: white;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: row;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .left-panel {
+            width: 40%;
+            padding: 20px;
+            background-color: #1e293b;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .right-panel {
+            width: 60%;
+            padding: 20px;
+            background-color: #0f172a;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        h2 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .horizontal-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        select {
+            background-color: #1e293b;
+            color: white;
+            border: 1px solid #334155;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 0 5px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        select:hover {
+            background-color: #334155;
+        }
+
+        #expenses-container ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        #expenses-container ul li {
+            background: #334155;
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        #expenses-container ul li strong {
+            font-weight: bold;
+            color: #60a5fa;
+        }
+
+        .chart-container {
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+        }
+
+        .chart-container img {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+        }
+
+        .chart-container p {
+            color: #94a3b8;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+
+            .left-panel, .right-panel {
+                width: 100%;
+                height: auto;
+            }
+        }
+    </style>
+    <script>
+        // JavaScript function to submit the form when any select changes
+        function submitFilterForm() {
+            document.getElementById('filterForm').submit();
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <!-- Sol Panel -->
+        <div class="left-panel">
+            <h2>Expenses</h2>
+            <!-- Form for month and year selection -->
+            <form method="post" action="{{ url_for('dashboard') }}" id="filterForm">
+                <div class="horizontal-container">
+                    <select name="month" id="monthSelect" onchange="submitFilterForm();">
+                        {% for month in all_months %}
+                            <option value="{{ month.number }}" {% if month.number == selected_month %}selected{% endif %}>
+                                {{ month.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+
+                    <select name="year" id="yearSelect" onchange="submitFilterForm();">
+                        {% for year in all_years %}
+                            <option value="{{ year }}" {% if year == selected_year %}selected{% endif %}>
+                                {{ year }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </form>
+
+            <div id="expenses-container">
+                <ul>
+                {% if emails %}
+                    {% for email in emails %}
+                        <li>
+                            <strong>Sender:</strong> {{ email.sender }}<br>
+                            <strong>Date:</strong> {{ email.date }}<br>
+                            <strong>Total Amount:</strong> {{ email.total_amount }}
+                        </li>
+                    {% endfor %}
+                {% else %}
+                    <li>No expenses found for the selected period.</li>
+                {% endif %}
+                </ul>
+            </div>
+        </div>
+
+        <!-- Sağ Panel -->
+        <div class="right-panel">
+            <h2>Expense Visualization</h2>
+
+            <div class="chart-container">
+                {% if plot_url %}
+                    <img src="data:image/png;base64,{{ plot_url }}" alt="Aylık Toplam Harcamalar Grafiği" />
+                {% else %}
+                    <p>Şu an görüntülenecek bir grafik bulunmuyor.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</body>
+</html>
