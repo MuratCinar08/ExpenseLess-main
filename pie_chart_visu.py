@@ -3,8 +3,8 @@ from google.oauth2.credentials import Credentials
 import pandas as pd
 import matplotlib.pyplot as plt
 import random
-from typing import List, Dict, Any
 import logging
+from typing import List, Dict
 
 from web_scraping import list_emails_with_month, get_deepest_text_payload, extract_order_details
 
@@ -27,7 +27,7 @@ class GmailAnalyzer:
         self.logger = self.setup_logger()
 
     @staticmethod
-    def setup_logger():
+    def setup_logger() -> logging.Logger:
         """Configure logging for the analyzer."""
         logger = logging.getLogger('GmailAnalyzer')
         logger.setLevel(logging.INFO)
@@ -64,14 +64,14 @@ class GmailAnalyzer:
                     sender = email.get('sender', '(Unknown Sender)')
                     body_content = get_deepest_text_payload(payload)
                     extracted_details = extract_order_details(body_content)
-                    total_amount = extracted_details['total_amount']
+                    total_amount = extracted_details.get('total_amount')
 
-                    if total_amount != "Tutar bulunamadı":
+                    if total_amount and total_amount != "Tutar bulunamadı":
                         email_data.append({
                             'sender': sender,
                             'total_amount': float(total_amount)
                         })
-                except (ValueError, KeyError) as e:
+                except Exception as e:
                     self.logger.warning(f"Error processing email {email.get('id')}: {str(e)}")
                     continue
 
@@ -99,12 +99,9 @@ class GmailAnalyzer:
         sender_totals = data.groupby('sender')['total_amount'].sum()
         total_spending = sender_totals.sum()
 
-        # Group small values
-        mask = (sender_totals / total_spending * 100) >= min_percentage
-        main_senders = sender_totals[mask]
-        others = pd.Series({
-            'Others': sender_totals[~mask].sum()
-        }) if any(~mask) else pd.Series()
+        # Group small values into 'Others'
+        main_senders = sender_totals[sender_totals / total_spending * 100 >= min_percentage]
+        others = pd.Series({'Others': sender_totals[sender_totals / total_spending * 100 < min_percentage].sum()})
 
         final_data = pd.concat([main_senders, others])
 
